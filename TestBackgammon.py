@@ -7,7 +7,6 @@ class TestGame(unittest.TestCase) :
         pass
 
     def assertOfType(self, obj, expected_type) :
-        print obj
         self.failIf(type(obj) !=  expected_type,
             "Expecting object of type " + str(expected_type) 
             + " got object of type " + str(type(obj)))
