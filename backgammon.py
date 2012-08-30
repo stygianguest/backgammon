@@ -62,7 +62,7 @@ class Game :
         for (o,s) in actions :
             d = o + (s*self.player)
             if after.board[o]*self.player <= 0 :
-                return "Can only move current player's tokens"
+                return "Must move token owned by this player"
 
             if self.player * (after.board[d] + self.player) < 0 :
                 return "Can only move on top of at most one token of the other player"
