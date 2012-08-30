@@ -5,7 +5,8 @@ NO_DICE = 2
 DICE_SIZE = 6
 
 class Game :
-    def __init__(self, other = None, dice = None, player = -1, side = [0,0],
+    def __init__(self, other = None, dice = None, player = -1, 
+        side = {1 : 0, -1 : 0},
         board=([0]*2 + [11]*5 + [16]*3 + [18]*5)) :
 
         if other :
@@ -13,7 +14,7 @@ class Game :
             self.board = list(other.board)
             self.player = other.player
             self.dice = list(other.dice)
-            self.side = list(other.side)
+            self.side = dict(other.side)
             return
             
         self.board = [ 0 for i in range(BOARD_LENGTH) ]
@@ -75,7 +76,7 @@ class Game :
                 # that means, don't add it anywhere
                 continue
 
-            if after.board[d] * after.player == 1 :
+            if after.board[d] == -after.player :
                 # stepping on top of someone: remove the token
                 after.board[d] = 0
                 after.side[-after.player] += 1
@@ -161,6 +162,6 @@ assert not isSubBag([1,2,1],[1,2])
 ################################################################################
 
 if __name__ == '__main__' :
-    g = Game()
+    g = Game(dice=[1], board = [0,1])
     print g
-    print g.move(zip([0,0], g.dice))
+    print g.move([(23,1)])

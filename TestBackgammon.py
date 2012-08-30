@@ -15,7 +15,8 @@ class TestGame(unittest.TestCase) :
         #TODO: test actual error types? then I should raise custom exceptions
 
         # ignoring tokens from the side
-        self.assertOfType(Game(side = (0,2), dice = [2]).move([(23,2)]), str)
+        self.assertOfType(
+            Game(side = {1 : 0, -1 : 2}, dice = [2]).move([(23,2)]), str)
 
         # steps inconsistent with dice
         self.assertOfType(Game(dice = [1]).move([(23,2)]), str)
@@ -54,7 +55,7 @@ class TestGame(unittest.TestCase) :
             [1,-1] + [0]*20 + [-1,0])
         self.assertEquals(
             Game(dice = [1], board = [0,22]).move([(23,1)]).side,
-            (1,0))
+            {1 : 1, -1 : 0})
 
         # hitting the opponent's token and moving on
         self.assertEquals(
@@ -62,7 +63,7 @@ class TestGame(unittest.TestCase) :
             [1,-1] + [0]*19 + [-1,0,0])
         self.assertEquals(
             Game(dice = [1], board = [0,22]).move([(23,1)]).side,
-            (1,0))
+            {1 : 1, -1 : 0})
         
 
 ################################################################################
