@@ -5,8 +5,10 @@ NO_DICE = 2
 DICE_SIZE = 6
 
 class Game :
-    def __init__(self, other = None) :
-        if other != None :
+    def __init__(self, other = None, dice = None, player = -1, side = [0,0],
+        board=([0]*2 + [11]*5 + [16]*3 + [18]*5)) :
+
+        if other :
             # copy the state of the other game
             self.board = list(other.board)
             self.player = other.player
@@ -17,17 +19,21 @@ class Game :
         self.board = [ 0 for i in range(BOARD_LENGTH) ]
 
         # negative token is black, positive white
-        for i in [0]*2 + [11]*5 + [16]*3 + [18]*5 :
+        for i in board :
             self.board[i] += 1
             self.board[-i-1] += -1
 
         # self.tokens[player] are the number of off-game tokens of player {1,-1}
         # since this isn't shared token count is always positive
-        self.side = [0,0]
+        self.side = side
 
         # players 1 and -1 (used for step direction)
-        self.player = -1
-        self.throw()
+        self.player = player
+
+        if dice :
+            self.dice = dice
+        else :
+            self.throw()
 
     def throw(self) :
         self.player = -self.player
@@ -154,7 +160,7 @@ assert not isSubBag([1,2,1],[1,2])
 
 ################################################################################
 
-g = Game()
-print g
-print g.move(zip([0,0], g.dice))
-
+if __name__ == '__main__' :
+    g = Game()
+    print g
+    print g.move(zip([0,0], g.dice))
