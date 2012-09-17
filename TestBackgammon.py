@@ -12,9 +12,9 @@ class TestGame(unittest.TestCase) :
             + " got object of type " + str(type(obj)))
 
     def testMoveErrors(self) :
-        # ignoring tokens from the side
+        # ignoring tokens from the bar
         self.assertRaises(Exception,
-            Game(side = {1 : 0, -1 : 2}, dice = [2]).move, 23,2)
+            Game(bar = {1 : 0, -1 : 2}, dice = [2]).move, 23,2)
 
         # steps inconsistent with dice
         self.assertRaises(Exception, Game(dice = [1]).move, 23, 2)
@@ -53,7 +53,7 @@ class TestGame(unittest.TestCase) :
             Game(dice = [1], board = [0,22]).move(23,1).board,
             [1,-1] + [0]*20 + [-1,0])
         self.assertEquals(
-            Game(dice = [1], board = [0,22]).move(23,1).side,
+            Game(dice = [1], board = [0,22]).move(23,1).bar,
             {1 : 1, -1 : 0})
 
         # hitting the opponent's token and moving on
@@ -61,21 +61,21 @@ class TestGame(unittest.TestCase) :
         #    Game(dice = [1,1], board = [0,22]).move([(23,1), (22,1)]).board,
         #    [1,-1] + [0]*19 + [-1,0,0])
         #self.assertEquals(
-        #    Game(dice = [1], board = [0,22]).move([(23,1)]).side,
+        #    Game(dice = [1], board = [0,22]).move([(23,1)]).bar,
         #    {1 : 1, -1 : 0})
 
         # moving from the bar
         self.assertEquals(
-            Game(dice = [1], board = [], side = {1 : 0, -1 : 1}).move(-1,1).board,
+            Game(dice = [1], board = [], bar = {1 : 0, -1 : 1}).move(-1,1).board,
             [0]*23 + [-1])
         self.assertEquals(
-            Game(dice = [1], board = [], side = {1 : 0, -1 : 1}).move(-1,1).side,
+            Game(dice = [1], board = [], bar = {1 : 0, -1 : 1}).move(-1,1).bar,
             {1 : 0, -1 : 0})
 
     def testCanMove(self) :
-        # no more legal moves with token blocked on the side
+        # no more legal moves with token blocked on the bar
         self.assertFalse(
-            Game(dice = [1], board = [23,23], side = {1 : 0, -1 : 1}).canMove())
+            Game(dice = [1], board = [23,23], bar = {1 : 0, -1 : 1}).canMove())
 
         # no more legal moves left with the current dice (blocked)
         self.assertFalse(
@@ -88,9 +88,9 @@ class TestGame(unittest.TestCase) :
         # still legal moves possible, simple unused dice
         self.assertTrue(Game(dice = [1]).canMove())
         
-        # still legal moves possible from the side
+        # still legal moves possible from the bar
         self.assertTrue(
-            Game(dice = [1], board = [], side = {1 : 0, -1 : 1}).canMove())
+            Game(dice = [1], board = [], bar = {1 : 0, -1 : 1}).canMove())
 
         # can still do collecting move
         self.assertTrue(Game(dice = [3], board=[23]).canMove())

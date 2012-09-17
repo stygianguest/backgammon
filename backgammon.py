@@ -4,11 +4,9 @@ BOARD_LENGTH = 4 * 6
 NO_DICE = 2
 DICE_SIZE = 6
 
-#TODO: renames s/token/checker/g s/side/bar/g
-
 class Game :
     def __init__(self, other = None, dice = None, player = -1, 
-        side = {1 : 0, -1 : 0},
+        bar = {1 : 0, -1 : 0},
         board=([0]*2 + [11]*5 + [16]*3 + [18]*5)) :
 
         if other :
@@ -16,19 +14,18 @@ class Game :
             self.board = list(other.board)
             self.player = other.player
             self.dice = list(other.dice)
-            self.side = dict(other.side)
+            self.bar = dict(other.bar)
             return
             
         self.board = [ 0 for i in range(BOARD_LENGTH) ]
 
-        # negative token is black, positive white
+        # negative checker is black, positive white
         for i in board :
             self.board[i] += 1
             self.board[-i-1] += -1
 
-        # self.tokens[player] are the number of off-game tokens of player {1,-1}
-        # since this isn't shared token count is always positive
-        self.side = side
+        # since this isn't shared checker count is always positive
+        self.bar = bar
 
         # players 1 and -1 (used for step direction)
         self.player = player
@@ -47,47 +44,47 @@ class Game :
             self.dice = self.dice * 2
 
     def move(self, o, s) :
-        # move the token at origin to destination (o+s) in a new game object
+        # move the checker at origin to destination (o+s) in a new game object
         # the bar has position -1 as origin when entering a checker 
         # collecting a checker is done by moving past the end of the board
 
-        if self.side[self.player] > 0 and o != -1 :
-            raise Exception("Must move as many tokens as possible from the side first")
+        if self.bar[self.player] > 0 and o != -1 :
+            raise Exception("Must move as many checkers as possible from the bar first")
 
         if s not in self.dice :
             raise Exception("No die matching the move")
 
         if o != -1 and self.board[o]*self.player <= 0 :
-            raise Exception("Must move token owned by this player")
+            raise Exception("Must move checker owned by this player")
 
-        if o == -1 and self.side[self.player] <= 0 :
+        if o == -1 and self.bar[self.player] <= 0 :
             raise Exception("There is no checker on the bar")
 
         # adjust in case we're coming from the bar (-1 or 24 dep on player)
         d = (24 if self.player == o else o) + s*self.player
 
         if self.player * (self.board[d] + self.player) < 0 :
-            raise Exception("Can only move on top of at most one token of the other player")
+            raise Exception("Can only move on top of at most one checker of the other player")
 
         # the new game state to be
         after = Game(self)
 
         if o == -1 :
-            after.side[after.player] -= 1
+            after.bar[after.player] -= 1
         else :
             after.board[o] -= after.player
 
         after.dice.remove(s)
 
         if d >= BOARD_LENGTH or d < 0 :
-            # if token is moved off the board, remove it from the game
+            # if checker is moved off the board, remove it from the game
             # that means, don't add it anywhere
             return after
 
         if after.board[d] == -after.player :
-            # stepping on top of someone: remove the token
+            # stepping on top of someone: remove the checker
             after.board[d] = 0
-            after.side[-after.player] += 1
+            after.bar[-after.player] += 1
 
         after.board[d] += after.player
 
@@ -97,7 +94,7 @@ class Game :
         return str(self)
 
     def __str__(self) :
-        s = str(self.side[-1]) + " "
+        s = str(self.bar[-1]) + " "
         if self.player == -1 :
             s += str(self.dice)
         s += "\n"
@@ -109,17 +106,17 @@ class Game :
         s += "\t"
         s += concat(intersperse(map(str, self.board[18:24]), " "))
         s += "\n"
-        s += str(self.side[1]) + " "
+        s += str(self.bar[1]) + " "
         if self.player == 1 :
             s += str(self.dice)
 
         return s
 
     def winner(self) :
-        if sum((p if p<0 else 0 for p in self.board), self.side[-1]) == 0 :
+        if sum((p if p<0 else 0 for p in self.board), self.bar[-1]) == 0 :
             return -1
 
-        if sum((p if p>0 else 0 for p in self.board), self.side[1]) == 0 :
+        if sum((p if p>0 else 0 for p in self.board), self.bar[1]) == 0 :
             return 1
 
         return None
@@ -139,8 +136,8 @@ class Game :
             for game in last :
                 # try all dice
                 for s in game.dice :
-                    # if there's checkers on the side, try those
-                    if game.side[game.player] > 0 :
+                    # if there's checkers on the bar, try those
+                    if game.bar[game.player] > 0 :
                         try : current.append(game.move(-1,s))
                         except Exception : pass
                     else : # otherwise try to move the checkers on the board
@@ -154,7 +151,7 @@ class Game :
     def canMove(self) :
         #FIXME: code duplication? in Game.nexts
         for s in self.dice :
-            if self.side[self.player] > 0 :
+            if self.bar[self.player] > 0 :
                 try :
                     self.move(-1,s)
                     return True
