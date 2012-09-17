@@ -180,35 +180,6 @@ def intersperse(lst, sep) :
 
 ################################################################################
 
-def isSubBag(x, y) :
-    x = list(x)
-    y = list(y)
-
-    while x :
-        try :
-            y.remove(x.pop())
-        except ValueError:
-            return False
-
-    return True
-
-assert isSubBag([],[])
-assert isSubBag([1],[1])
-assert isSubBag([1,2],[1,2])
-assert isSubBag([1,1,2],[1,1,2])
-assert isSubBag([1,2,1],[1,2,1])
-assert isSubBag([],[1])
-assert isSubBag([1],[1,2])
-assert isSubBag([1,2],[1,1,2])
-assert isSubBag([1,2],[1,2,1])
-
-assert not isSubBag([1],[])
-assert not isSubBag([1],[2])
-assert not isSubBag([1,2],[1])
-assert not isSubBag([1,2,1],[1,2])
-
-################################################################################
-
 if __name__ == '__main__' :
     game = Game()
 
