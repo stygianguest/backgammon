@@ -4,6 +4,8 @@ BOARD_LENGTH = 4 * 6
 NO_DICE = 2
 DICE_SIZE = 6
 
+#TODO: renames s/token/checker/g s/side/bar/g
+
 class Game :
     def __init__(self, other = None, dice = None, player = -1, 
         side = {1 : 0, -1 : 0},
@@ -44,60 +46,55 @@ class Game :
             # if the dice are the same, double the dice
             self.dice = self.dice * 2
 
-    def move(self, actions) :
-        # the pairs (t,s) in actions are commands that move the token at t s
-        # steps where the direction depends on the current player offside
-        # tokens have position -1
+    def move(self, o, s) :
+        # move the token at origin to destination (o+s) in a new game object
+        # the bar has position -1 as origin when entering a checker 
+        # collecting a checker is done by moving past the end of the board
 
-        if len(filter(lambda (t,s) : t == -1, actions)) < min(len(self.dice), 
-                self.side[self.player]) :
-            return "Must move as many tokens as possible from the side first"
+        if self.side[self.player] > 0 and o != -1 :
+            raise Exception("Must move as many tokens as possible from the side first")
 
-        if not isSubBag([s for t,s in actions], self.dice) :
-            return "Moves are inconsistent with the dice"
+        if s not in self.dice :
+            raise Exception("No die matching the move")
+
+        if o != -1 and self.board[o]*self.player <= 0 :
+            raise Exception("Must move token owned by this player")
+
+        if o == -1 and self.side[self.player] <= 0 :
+            raise Exception("There is no checker on the bar")
+
+        # adjust in case we're coming from the bar (-1 or 24 dep on player)
+        d = (24 if self.player == o else o) + s*self.player
+
+        if self.player * (self.board[d] + self.player) < 0 :
+            raise Exception("Can only move on top of at most one token of the other player")
 
         # the new game state to be
         after = Game(self)
 
-        # execute the actions
-        for (o,s) in actions :
-            d = o + (s*self.player)
-            if after.board[o]*self.player <= 0 :
-                return "Must move token owned by this player"
-
-            if self.player * (after.board[d] + self.player) < 0 :
-                return "Can only move on top of at most one token of the other player"
-
+        if o == -1 :
+            after.side[after.player] -= 1
+        else :
             after.board[o] -= after.player
-            after.dice.remove(s)
 
-            if d >= BOARD_LENGTH :
-                # if token is moved off the board, remove it from the game
-                # that means, don't add it anywhere
-                continue
+        after.dice.remove(s)
 
-            if after.board[d] == -after.player :
-                # stepping on top of someone: remove the token
-                after.board[d] = 0
-                after.side[-after.player] += 1
+        if d >= BOARD_LENGTH or d < 0 :
+            # if token is moved off the board, remove it from the game
+            # that means, don't add it anywhere
+            return after
 
-            after.board[d] += after.player
-        
-        ## check if all dice are utilized
-        ## try all tokens and see if they could move
-        #for s in after.moves :
-        #    for o in range(BOARD_LENGTH) :
-        #        d = o + (s*self.player)
-        #        # if current player has a token at position o
-        #        if after.board[o] * after.player <= 0 :
-        #            # and the other player has no more than a single token
-        #            # at the destinatoin
-        #            if after.board[d] * after.player > 1 :
+        if after.board[d] == -after.player :
+            # stepping on top of someone: remove the token
+            after.board[d] = 0
+            after.side[-after.player] += 1
 
-        # prepare for the next move
-        after.throw()
-        
+        after.board[d] += after.player
+
         return after
+
+    def __repr__(self) :
+        return str(self)
 
     def __str__(self) :
         s = str(self.side[-1]) + " "
@@ -117,6 +114,60 @@ class Game :
             s += str(self.dice)
 
         return s
+
+    def winner(self) :
+        if sum((p if p<0 else 0 for p in self.board), self.side[-1]) == 0 :
+            return -1
+
+        if sum((p if p>0 else 0 for p in self.board), self.side[1]) == 0 :
+            return 1
+
+        return None
+
+    def isOver(self) :
+        return bool(self.winner())
+
+    def nexts(self) :
+        last = []
+        current = [self]
+
+        while current != [] :
+            last = current
+            current = []
+
+            # to advance a step from the current games
+            for game in last :
+                # try all dice
+                for s in game.dice :
+                    # if there's checkers on the side, try those
+                    if game.side[game.player] > 0 :
+                        try : current.append(game.move(-1,s))
+                        except Exception : pass
+                    else : # otherwise try to move the checkers on the board
+                        for o in range(BOARD_LENGTH) :
+                            try : current.append(game.move(o,s))
+                            except Exception : pass
+
+        return last
+
+
+    def canMove(self) :
+        #FIXME: code duplication? in Game.nexts
+        for s in self.dice :
+            if self.side[self.player] > 0 :
+                try :
+                    self.move(-1,s)
+                    return True
+                except Exception :
+                    pass
+            else :
+                for o in range(BOARD_LENGTH) :
+                    try :
+                        self.move(o,s)
+                        return True
+                    except Exception :
+                        pass
+        return False
 
 
 def concat(lsts) :
@@ -162,6 +213,38 @@ assert not isSubBag([1,2,1],[1,2])
 ################################################################################
 
 if __name__ == '__main__' :
-    g = Game(dice=[1], board = [0,1])
-    print g
-    print g.move([(23,1)])
+    game = Game()
+
+    # loop until the game is over
+    while not game.isOver() :
+
+        turn_start = game
+
+        # loop as long as we can still move
+        while game.canMove() :
+            print game
+            try :
+                origin = int(raw_input("Move from position [-1|1-24]: "))-1
+                die = int(raw_input("With die " + str(game.dice) + ": "))
+                game = game.move(origin, die)
+            except Exception, e :
+                print e
+
+        # no more moves possible at this point, if there's still dice left
+        # we must check that there was no alternative where more dice were used
+        if game.dice and \
+            any(( len(g.dice) < len(game.dice) for g in turn_start.nexts() )) :
+
+            print "Restarting turn, because there is a move that uses more dice"
+            game = turn_start
+        else :
+            # turn is complete, throw and continue the game
+            print "asdf"
+            game.throw()
+
+    print "Game Over!",
+    if game.winner() == -1 :
+        print "Black has won!"
+    else :
+        print "White has won!"
+
